@@ -40,7 +40,8 @@ class EchoBot(ClientXMPP):
 
     def message(self, msg):
         def ipy_send_callback(m):
-            self.send_message(mto=msg['from'].bare,mbody=re.sub(r'\x1b\[\d*m','',str(m)),mtype='chat')
+            # remove color character from shell
+            self.send_message(mto=msg['from'].bare,mbody=re.sub(r'\x1b\[\d*(;\d+)?m','',str(m)),mtype='chat')
 
         if msg['type'] in ('chat', 'normal'):
             print(str(msg['body']))

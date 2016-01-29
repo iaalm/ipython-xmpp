@@ -160,9 +160,8 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
                     elif msg_type == 'error':
                         callback('Err')
                         for frame in sub_msg["content"]["traceback"]:
-                            print(frame)
-                            #TODO: use the following
-                            #callback(str(frame))
+                            #print(frame)
+                            callback(str(frame))
 
 
 
