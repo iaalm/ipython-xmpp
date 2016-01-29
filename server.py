@@ -4,34 +4,11 @@ from __future__ import print_function
 import os
 import sys
 
-from IPython.kernel.inprocess import InProcessKernelManager
-from IPython.core.interactiveshell import InteractiveShell
-
 import asyncio
 import logging
 
 from slixmpp import ClientXMPP
-
-#ipython
-
-def print_process_id():
-        print('Process ID is:', os.getpid())
-
-def init_ipython_shell():
-    print_process_id()
-
-    # Create an in-process kernel
-    # >>> print_process_id()
-    # will print the same process ID as the main process
-    kernel_manager = InProcessKernelManager()
-    kernel_manager.start_kernel()
-    kernel = kernel_manager.kernel
-    #kernel.gui = 'qt4'
-    #kernel.shell.push({'foo': 43, 'print_pid': print_process_id})
-
-    shell = InteractiveShell(manager=kernel_manager)
-    return shell
-
+from IpyAdapter import init_ipy
 
 #xmpp
 class EchoBot(ClientXMPP):
@@ -61,12 +38,7 @@ class EchoBot(ClientXMPP):
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
             print(str(msg['body']))
-            res = self.shell.run_cell(msg['body'])
-            if res.success:
-                msg.reply(str(res.result)).send()
-            else:
-                msg.reply("Fail:" + str(res.result)).send()
-
+            self.shell.run(msg['body'],msg)
 
 if __name__ == '__main__':
     # Ideally use optparse or argparse to get JID,
@@ -75,7 +47,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format='%(levelname)-8s %(message)s')
 
-    shell = init_ipython_shell()
+    shell = init_ipy()
 
     xmpp = EchoBot(sys.argv[1], sys.argv[2], shell)
     xmpp.connect()
