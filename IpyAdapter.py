@@ -1,6 +1,7 @@
 import logging
 import signal
 from queue import Empty
+import time
 
 from traitlets import (
     Dict, Any
@@ -137,6 +138,8 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
         #self.shell.mainloop()
 
     def run(self, cmd, callback):
+        #TODO: read the jupyter_console.interactiveshell.ZMQTerminalInteractiveShell.interactive
+        #      avoid use such closure
         def fun(self, msg_id=''):
             """Process messages on the IOPub channel
                This method consumes and processes messages on the IOPub channel,
@@ -152,12 +155,14 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
                     if msg_type == 'status':
                         self._execution_state = sub_msg["content"]["execution_state"]
                     elif msg_type == 'stream':
-                        callback.reply(str(sub_msg["content"]["text"])).send()
+                        callback(mbody=str(sub_msg["content"]["text"]))
                     elif msg_type == 'execute_result':
-                        callback.reply(str(sub_msg["content"]["data"])).send()
+                        sendback_multimedia(sub_msg["content"]["data"], callback)
                     elif msg_type == 'error':
+                        callback(mbody='Err')
                         for frame in sub_msg["content"]["traceback"]:
-                            print(frame, file=io.stderr)
+                            print(frame)
+                            #callback(mbody=str(frame))
 
 
 
@@ -165,6 +170,14 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
         if not self.shell.wait_for_kernel(self.shell.kernel_timeout):
             print('kernel error')
         self.shell.run_cell(cmd)
+
+def sendback_multimedia(msg, callback):
+        for type in msg:
+            if type == 'text/plain':
+                callback(mbody='Out:'+msg[type])
+            else:
+                callback(mbody='Out:'+str(msg))
+
 
 
 

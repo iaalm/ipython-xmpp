@@ -6,6 +6,7 @@ import sys
 
 import asyncio
 import logging
+from functools import partial
 
 from slixmpp import ClientXMPP
 from IpyAdapter import init_ipy
@@ -19,6 +20,7 @@ class EchoBot(ClientXMPP):
         self.shell = shell
         self.add_event_handler("session_start", self.session_start)
         self.add_event_handler("message", self.message)
+        self.add_event_handler("disconnected", self.disconnected)
 
         # If you wanted more functionality, here's how to register plugins:
         # self.register_plugin('xep_0030') # Service Discovery
@@ -38,7 +40,11 @@ class EchoBot(ClientXMPP):
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
             print(str(msg['body']))
-            self.shell.run(msg['body'],msg)
+            self.shell.run(msg['body'],partial(self.send_message, mto=msg['from']))
+
+    def disconnected(self, event):
+        print('disconnected')
+        self.connect()
 
 if __name__ == '__main__':
     # Ideally use optparse or argparse to get JID,
