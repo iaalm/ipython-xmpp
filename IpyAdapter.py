@@ -1,7 +1,6 @@
 import logging
 import signal
 from queue import Empty
-import time
 
 from traitlets import (
     Dict, Any
@@ -155,14 +154,15 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
                     if msg_type == 'status':
                         self._execution_state = sub_msg["content"]["execution_state"]
                     elif msg_type == 'stream':
-                        callback(mbody=str(sub_msg["content"]["text"]))
+                        callback(sub_msg["content"]["text"])
                     elif msg_type == 'execute_result':
                         sendback_multimedia(sub_msg["content"]["data"], callback)
                     elif msg_type == 'error':
-                        callback(mbody='Err')
+                        callback('Err')
                         for frame in sub_msg["content"]["traceback"]:
                             print(frame)
-                            #callback(mbody=str(frame))
+                            #TODO: use the following
+                            #callback(str(frame))
 
 
 
@@ -174,9 +174,9 @@ class ZMQTerminalIPythonApp(JupyterApp, JupyterConsoleApp):
 def sendback_multimedia(msg, callback):
         for type in msg:
             if type == 'text/plain':
-                callback(mbody='Out:'+msg[type])
+                callback('Out:'+msg[type])
             else:
-                callback(mbody='Out:'+str(msg))
+                callback('Out:'+str(msg))
 
 
 

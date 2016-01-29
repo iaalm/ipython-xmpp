@@ -3,6 +3,7 @@
 from __future__ import print_function
 import os
 import sys
+import re
 
 import asyncio
 import logging
@@ -38,13 +39,19 @@ class EchoBot(ClientXMPP):
         # callback that will be executed when the reply is received.
 
     def message(self, msg):
+        def ipy_send_callback(m):
+            self.send_message(mto=msg['from'].bare,mbody=re.sub(r'\x1b\[\d*m','',str(m)),mtype='chat')
+
         if msg['type'] in ('chat', 'normal'):
             print(str(msg['body']))
-            self.shell.run(msg['body'],partial(self.send_message, mto=msg['from']))
+            #self.shell.run(msg['body'],partial(self.send_message, mto=msg['from'].bare))
+            self.shell.run(msg['body'],ipy_send_callback)
 
     def disconnected(self, event):
         print('disconnected')
         self.connect()
+
+
 
 if __name__ == '__main__':
     # Ideally use optparse or argparse to get JID,
